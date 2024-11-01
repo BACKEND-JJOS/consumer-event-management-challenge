@@ -1,0 +1,25 @@
+server:
+  port: 8082
+spring:
+  webflux:
+    base-path: "/iasapi"
+  application:
+    name: consumer-event-management-challenge
+  profiles:
+    active: dev
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
+management:
+  endpoints:
+    web.exposure.include: '*'
+    endpoint.health.show-details: 'always'
+logging:
+  level:
+    com.ias: DEBUG
+    org.slf4j: DEBUG
+aws:
+  region: "us-east-1"
+  secrets:
+    rabbitmq-secret-name: "rabbitmq-secret-name"

@@ -1,0 +1,12 @@
+dependencies {
+
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'com.fatboyindustrial.gson-javatime-serialisers:gson-javatime-serialisers:1.1.2'
+
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+    implementation 'jakarta.persistence:jakarta.persistence-api'
+    implementation 'org.postgresql:r2dbc-postgresql'
+
+    implementation project(':model')
+}

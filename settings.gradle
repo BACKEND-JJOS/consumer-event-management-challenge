@@ -1,0 +1,16 @@
+rootProject.name = 'consumer-event-management-challenge'
+
+include ':app-service'
+project(':app-service').projectDir = file('./application/app-service')
+
+include ':model'
+project(':model').projectDir = file('./domain/model')
+
+include ':usecase'
+project(':usecase').projectDir = file('./domain/usecase')
+
+include ':r2dbc-adapter'
+project(':r2dbc-adapter').projectDir = file('./infrastructure/driven-adapters/r2dbc-adapter')
+
+include ':secret-manager'
+project(':secret-manager').projectDir = file('./helpers/secret-manager')
