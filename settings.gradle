@@ -14,3 +14,11 @@ project(':r2dbc-adapter').projectDir = file('./infrastructure/driven-adapters/r2
 
 include ':secret-manager'
 project(':secret-manager').projectDir = file('./helpers/secret-manager')
+
+include ':event-consumer'
+project(':event-consumer').projectDir = file('./infrastructure/entry-points/event-consumer')
+
+include ':webclient-adapter'
+project(':webclient-adapter').projectDir = file('./infrastructure/driven-adapters/webclient-adapter')
+
+
