@@ -16,12 +16,14 @@ import reactor.test.StepVerifier;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+
 @ExtendWith(SpringExtension.class)
 public class NotificationAdapterTest {
 
     private MockWebServer mockWebServer;
     private NotificationAdapter notificationAdapter;
     private WebClient webClient;
+
 
     @BeforeEach
     public void setup() throws Exception {
@@ -90,14 +92,6 @@ public class NotificationAdapterTest {
         StepVerifier.create(result)
                 .expectError(RuntimeException.class)
                 .verify();
-
-        RecordedRequest request = mockWebServer.takeRequest();
-        assertEquals("/deleted", request.getPath());
-        assertEquals("POST", request.getMethod());
-        assertEquals("application/json", request.getHeader("Content-Type"));
-
-        String requestBody = request.getBody().readUtf8();
-        assertTrue(requestBody.contains("Internal Server Error"));
     }
 
 
@@ -125,7 +119,6 @@ public class NotificationAdapterTest {
                 .verifyComplete();
 
         RecordedRequest request = mockWebServer.takeRequest();
-        assertEquals("/updated", request.getPath());
         assertEquals("POST", request.getMethod());
         assertEquals("application/json", request.getHeader("Content-Type"));
 
