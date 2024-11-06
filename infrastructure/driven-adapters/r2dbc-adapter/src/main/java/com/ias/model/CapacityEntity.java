@@ -1,6 +1,7 @@
 package com.ias.model;
 
 import lombok.*;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
@@ -11,6 +12,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @NoArgsConstructor
 @Table("capacity")
 public class CapacityEntity {
+    @Id
     private Integer id;
     private String status;
     private Integer eventId;

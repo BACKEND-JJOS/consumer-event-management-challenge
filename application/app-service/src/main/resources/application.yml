@@ -21,7 +21,7 @@ logging:
     org.slf4j: DEBUG
 url:
   notification:
-    service: http://localhost:3000/iasapi/notification
+    service: /iasapi/notification
 aws:
   region: "us-east-1"
   secrets:

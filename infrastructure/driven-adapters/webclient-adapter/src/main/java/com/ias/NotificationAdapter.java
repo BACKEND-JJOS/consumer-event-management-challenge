@@ -19,17 +19,19 @@ import java.time.Duration;
 @Slf4j
 public class NotificationAdapter implements NotificationRepository {
 
-    WebClient webClient;
+    private final WebClient webClient;
 
     private final Gson mapper;
+
+    private static final String MESSAGE_LOG_TRACE = "ADAPTER WEB CLIENT RUN {} WITH TRACE {}";
 
     @Value("${url.notification.service}")
     private String notificationServiceUrl;
 
     @Override
-    public Mono<Capacity> newCapacityCreated(Capacity capacity) {
+    public Mono<Capacity> newCapacityCreated(Capacity capacity, String traceUUID) {
         return webClient.post()
-                .uri(notificationServiceUrl)
+                .uri(notificationServiceUrl + "/created")
                 .body(BodyInserters.fromValue(
                                 mapper.fromJson(
                                         mapper.toJson(capacity),
@@ -39,14 +41,60 @@ public class NotificationAdapter implements NotificationRepository {
                 .exchangeToMono(response ->
                         !response.statusCode().isError() ?
                                 response.bodyToMono(Capacity.class) :
+
                                 response.bodyToMono(ProblemDetail.class)
                                         .flatMap(errorMessage ->
-                                                Mono.error(new RuntimeException("Error: Cambiar a excepción personalizada y capturar"))
+                                                Mono.error(new RuntimeException("Error" + errorMessage))
                                         )
                 )
                 .timeout(Duration.ofSeconds(5))
-                .doOnNext(capacityFinal -> log.debug("Message Capacity sent successfully: {}", capacityFinal))
-                .doOnError(error -> log.error("Error occurred while sending Capacity: {}", error.getMessage()));
+                .doOnNext(capacity1 -> log.debug(MESSAGE_LOG_TRACE, "newCapacityCreated", traceUUID))
+                .doOnError(error -> log.error("ADAPTER WEB CLIENT Error occurred while sending Capacity: {}", error.getMessage()));
+    }
+
+    @Override
+    public Mono<String> capacityDeleted(Event event, String traceUUID) {
+        return webClient.post()
+                .uri(notificationServiceUrl + "/deleted")
+                .body(BodyInserters.fromValue(event))
+                .retrieve()
+                .onStatus(
+                        httpStatusCode -> httpStatusCode.is5xxServerError(),
+                        response -> {
+                            log.error("500 SERVER ERROR DURING CAPACITY DELETED NOTIFICATION for trace {}", traceUUID);
+                            return Mono.error(new RuntimeException("Service unavailable, 500 error"));
+                        }
+                )
+                .bodyToMono(Void.class)
+                .thenReturn("notification deleted capacity")
+                .doOnSuccess(message -> log.debug(MESSAGE_LOG_TRACE, message, traceUUID))
+                .doOnError(error -> log.error("ADAPTER WEB CLIENT Error occurred while sending Capacity: {}", error.getMessage()));
+    }
+
+    @Override
+    public Mono<String> capacityUpdated(Capacity capacity, String traceUUID) {
+        return webClient.post()
+                .uri(notificationServiceUrl + "/updated")
+                .body(BodyInserters.fromValue(capacity))
+                .retrieve()
+                .onStatus(
+                        httpStatusCode -> httpStatusCode.is5xxServerError(),
+                        response -> {
+                            log.error("500 SERVER ERROR DURING CAPACITY UPDATED NOTIFICATION for trace {}", traceUUID);
+                            return Mono.error(new RuntimeException("Service unavailable, 500 error"));
+                        }
+                )
+                .onStatus(
+                        httpStatusCode -> httpStatusCode.is4xxClientError(),
+                        clientResponse -> {
+                            log.error("400 CLIENT ERROR DURING CAPACITY UPDATED NOTIFICATION for trace {}", traceUUID);
+                            return Mono.error(new RuntimeException("Service error, 400 error"));
+                        }
+                )
+                .bodyToMono(Void.class)
+                .thenReturn("notification updated capacity")
+                .doOnSuccess(message -> log.debug(MESSAGE_LOG_TRACE, message, traceUUID))
+                .doOnError(error -> log.error("ADAPTER WEB CLIENT Error occurred while sending Capacity: {}", error.getMessage()));
     }
 
 }
