@@ -135,4 +135,113 @@ public class HandleEventTest {
 
         verify(updatedCapacityByEventUseCase, times(1)).execute(any(), anyString());
     }
+
+    @Test
+    void handleUpdatedEvent_shouldHandleNonRecoverableError() {
+        MessageDTO<EventDTO> messageDTO = new MessageDTO<>();
+        messageDTO.setTraceUUID("trace-uuid");
+
+        when(updatedCapacityByEventUseCase.execute(any(), anyString()))
+                .thenReturn(Mono.error(new RuntimeException("Non-recoverable error")));
+
+        Mono<Void> result = handleEvent.handleUpdatedEvent(messageDTO);
+
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+
+        verify(updatedCapacityByEventUseCase, times(1)).execute(any(), anyString());
+    }
+
+    @Test
+    void handleDeletedEvent_shouldCompleteSuccessfully() {
+        EventDTO eventDTO = EventDTO.builder()
+                .id(1)
+                .location("any location")
+                .date("any-date")
+                .name("event-name-mock")
+                .build();
+
+        Event event = Event.builder()
+                .id(1)
+                .location("any location")
+                .date("any-date")
+                .name("event-name-mock")
+                .build();
+        String eventJson = "{\"id\":1,\"location\":\"any location\",\"date\":\"any-date\",\"name\":\"event-name-mock\"}";
+
+        MessageDTO<EventDTO> messageDTO = new MessageDTO<>();
+        messageDTO.setData(eventDTO);
+        messageDTO.setTraceUUID("trace-uuid");
+
+        when(mapper.toJson(eventDTO)).thenReturn(eventJson);
+        when(mapper.fromJson(any(String.class), eq(Event.class)))
+                .thenReturn(event);
+
+        when(deletedCapacityByEventUseCase.execute(any(), anyString()))
+                .thenReturn(Mono.just("Capacity deleted successfully"));
+
+        Mono<Void> result = handleEvent.handleDeletedEvent(messageDTO);
+
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+
+        verify(deletedCapacityByEventUseCase, times(1)).execute(any(), anyString());
+    }
+
+    @Test
+    void handleDeletedEvent_shouldHandleNonRecoverableError() {
+        MessageDTO<EventDTO> messageDTO = new MessageDTO<>();
+        messageDTO.setTraceUUID("trace-uuid");
+
+        when(deletedCapacityByEventUseCase.execute(any(), anyString()))
+                .thenReturn(Mono.error(new RuntimeException("Non-recoverable error")));
+
+        Mono<Void> result = handleEvent.handleDeletedEvent(messageDTO);
+
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+
+        verify(deletedCapacityByEventUseCase, times(1)).execute(any(), anyString());
+    }
+
+    @Test
+    void handleUpdatedEvent_shouldCompleteSuccessfully() {
+        // Arrange
+        EventDTO eventDTO = EventDTO.builder()
+                .id(1)
+                .location("any location")
+                .date("any-date")
+                .name("event-name-mock")
+                .build();
+
+        Event event = Event.builder()
+                .id(1)
+                .location("any location")
+                .date("any-date")
+                .name("event-name-mock")
+                .build();
+
+        String eventJson = "{\"id\":1,\"location\":\"any location\",\"date\":\"any-date\",\"name\":\"event-name-mock\"}";
+
+        MessageDTO<EventDTO> messageDTO = new MessageDTO<>();
+        messageDTO.setData(eventDTO);
+        messageDTO.setTraceUUID("trace-uuid");
+
+        when(mapper.toJson(eventDTO)).thenReturn(eventJson);
+        when(mapper.fromJson(any(String.class), eq(Event.class))).thenReturn(event);
+        when(updatedCapacityByEventUseCase.execute(any(), anyString()))
+                .thenReturn(Mono.just(new Capacity()));
+
+        Mono<Void> result = handleEvent.handleUpdatedEvent(messageDTO);
+
+        StepVerifier.create(result)
+                .expectComplete()
+                .verify();
+
+        verify(updatedCapacityByEventUseCase, times(1)).execute(any(), anyString());
+    }
+
 }
