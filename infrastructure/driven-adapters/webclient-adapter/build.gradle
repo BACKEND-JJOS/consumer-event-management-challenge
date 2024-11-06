@@ -1,7 +1,11 @@
-
 dependencies {
     implementation 'com.google.code.gson:gson:2.11.0'
     implementation 'com.fatboyindustrial.gson-javatime-serialisers:gson-javatime-serialisers:1.1.2'
+
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
+
+    // MockWebServer para simular un servidor HTTP en pruebas
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.11.0'
 
     implementation project(':model')
 }

@@ -20,7 +20,6 @@ import java.time.Duration;
 public class HandleEvent {
 
     private final CreateNewCapacityByEventUseCase createNewCapacityByEventUseCase;
-
     private final UpdatedCapacityByEventUseCase updatedCapacityByEventUseCase;
     private final DeletedCapacityByEventUseCase deletedCapacityByEventUseCase;
 
