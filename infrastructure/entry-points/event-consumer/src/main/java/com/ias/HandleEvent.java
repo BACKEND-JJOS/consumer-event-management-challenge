@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.ias.config.RabbitConsumerConfig;
 import com.ias.dto.EventDTO;
 import com.ias.dto.MessageDTO;
+import com.ias.dto.RegisterEventDTO;
 import com.ias.exception.CapacityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,7 @@ public class HandleEvent {
     private final CreateNewCapacityByEventUseCase createNewCapacityByEventUseCase;
     private final UpdatedCapacityByEventUseCase updatedCapacityByEventUseCase;
     private final DeletedCapacityByEventUseCase deletedCapacityByEventUseCase;
-
+    private final IncrementCapacityByEventIdUseCase incrementCapacityByEventIdUseCase;
     private final Gson mapper;
 
     @RabbitListener(queues = RabbitConsumerConfig.EVENT_CREATED_QUEUE)
@@ -82,11 +83,36 @@ public class HandleEvent {
                             return Mono.empty();
                         }
                 )
-                .doOnError(error -> log.error("ERROR CREATING THE CAPACITY : {}", error))
+                .doOnError(error -> log.error("ERROR DELETED THE CAPACITY : {}", error))
                 .retryWhen(
                         Retry.backoff(3, Duration.ofSeconds(2))
                                 .doAfterRetry(retrySignal ->
-                                        log.warn("RETRY ATTEMPT #{} DUE TO ERROR: {} WITH TRACE {}", retrySignal.totalRetries(), retrySignal.failure(), messageDTO.getTraceUUID())
+                                        log.warn("RETRY {}  ERROR  SIGNAl {} WITH TRACE {}", retrySignal.totalRetries(), retrySignal.failure(), messageDTO.getTraceUUID())
+                                )
+                )
+                .onErrorResume(e -> {
+                    log.error("UNRECOVERABLE ERROR {} WITH TRACE {}", e.getMessage(), messageDTO.getTraceUUID());
+                    return Mono.empty();
+                })
+                .then();
+    }
+
+    @RabbitListener(queues = RabbitConsumerConfig.EVENT_USER_REGISTER_QUEUE)
+    public Mono<Void> handleUserRegisterToEvent(MessageDTO<RegisterEventDTO> messageDTO) {
+        log.debug("RABBIT RUN {} WITH TRACE {}", RabbitConsumerConfig.EVENT_USER_REGISTER_QUEUE, messageDTO.getData());
+        return incrementCapacityByEventIdUseCase.execute(
+                        messageDTO.getData().getEventId(),
+                        messageDTO.getTraceUUID()
+                ).flatMap(capacity -> {
+                            log.info("CAPACITY UPDATED WITH NEW NUMBER OF ASSISTANT WITH TRACE {}", messageDTO.getTraceUUID());
+                            return Mono.just(capacity);
+                        }
+                )
+                .doOnError(error -> log.error("ERROR UPDATING THE CAPACITY : {}", error))
+                .retryWhen(
+                        Retry.backoff(3, Duration.ofSeconds(2))
+                                .doAfterRetry(retrySignal ->
+                                        log.warn("RETRY {}  ERROR  SIGNAl {} WITH TRACE {}", retrySignal.totalRetries(), retrySignal.failure(), messageDTO.getTraceUUID())
                                 )
                 )
                 .onErrorResume(e -> {

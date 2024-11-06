@@ -21,7 +21,8 @@ public class UpdatedCapacityByEventUseCase {
         return capacityRepository.findByEventId(event.getId())
                 .switchIfEmpty(Mono.error(new CapacityNotFoundException("Capacity not found for Event ID: " + event.getId())))
                 .flatMap(capacity -> {
-                    capacity.setNumberAssistant(capacity.getNumberAssistant() + 1);
+                    capacity.setLocation(event.getLocation());
+                    capacity.setStatus("ACTIVE");
                     return capacityRepository.save(capacity, traceUUID);
                 })
                 .flatMap(capacityUpdated -> notificationRepository.capacityUpdated(capacityUpdated, traceUUID)
